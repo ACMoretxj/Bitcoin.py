@@ -1,85 +1,80 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import binascii
+import hashlib
 from collections import OrderedDict, namedtuple
 
 from Crypto.Hash import SHA
 from Crypto.PublicKey import RSA
 from Crypto.Signature import PKCS1_v1_5
 
+from blockchain.error import TxValidationError
+from blockchain.settings import MAX_MONEY
+
+TxIn = namedtuple('TxIn', ['txid', 'txout_idx', 'unlock_sig', 'unlock_pk'])
+TxOut = namedtuple('TxOut', ['value', 'receiver'])
+UTxOut = namedtuple('UTxOut', ['value', 'receiver', 'txid', 'txout_idx',
+                               'is_coinbase', 'height'])
+
 
 class Transaction:
 
-    TxIn = namedtuple('TxIn', [])
+    TransactionRepr = namedtuple('TransactionRepr', ['txins', 'txouts'])
 
-    def __init__(self, sender, passwd, receiver, value):
-        """
-        initialize the transaction
-        :param sender: sender address
-        :param passwd: sender private key
-        :param receiver: receiver address
-        :param value: send value
-        """
-        self.sender = sender
-        self.passwd = passwd
-        self.receiver = receiver
-        self.value = value
+    def __init__(self, txins, txouts):
+        self.txins = txins
+        self.txouts = txouts
 
-    def sign(self):
-        """
-        sign the transaction using PKCS
-        :return: the signature result
-        """
-        priv_key = RSA.importKey(binascii.unhexlify(self.passwd))
-        signer = PKCS1_v1_5.new(priv_key)
-        hsh = SHA.new(repr(self).encode('utf-8'))
-        return binascii.hexlify(signer.sign(hsh)).decode('ascii')
+    @property
+    def id(self):
+        return hash(self)
 
-    def verify(self, signature):
-        """
-        verify the transaction
-        :param signature: signature of transaction to be verified
-        :return: whether the transaction is valid or not
-        """
-        publ_key = RSA.importKey(binascii.unhexlify(self.sender))
-        verifier = PKCS1_v1_5.new(publ_key)
-        hsh = SHA.new(repr(self).encode('utf-8'))
-        return verifier.verify(hsh, binascii.unhexlify(signature))
+    @property
+    def is_coinbase(self):
+        return len(self.txins) == 1 and self.txins[0].utxos is None
+
+    def verify(self):
+        if (not self.txouts) or (not self.txins and not self.is_coinbase):
+            raise TxValidationError('Missing txouts or txins')
+        if sum(txout.value for txout in self.txouts) > MAX_MONEY:
+            raise TxValidationError('Spend value too high')
 
     def __repr__(self):
-        data = OrderedDict({
-            'sender': self.sender,
-            'receiver': self.receiver,
-            'value': self.value
-        })
+        data = self.TransactionRepr(self.txins, self.txouts)
         return str(data)
+
+    def __hash__(self):
+        return hashlib.sha256(self).hexdigest()
+
+
+class UTXOManager:
+
+    OutPoint = namedtuple('OutPoint', ['txid', 'txout_id'])
+
+    def __init__(self, utxos):
+        self.utxos = utxos
+
+    def add(self, txout, tx, idx, is_coinbase, height):
+        utxo = UTxOut(*txout, tx.id, idx, is_coinbase, height)
+        op = self.OutPoint(utxo.txid, utxo.txout_idx)
+        self.utxos[op] = utxo
+
+    def remove(self, txid, txout_idx):
+        op = self.OutPoint(txid, txout_idx)
+        del self.utxos[op]
+
+    def find(self, txid, txout_idx):
+        op = self.OutPoint(txid, txout_idx)
+        return self.utxos[op]
 
 
 class TransactionManager:
 
-    MINING_SENDER = 'mining sender'
-
     def __init__(self):
-        """
-        initialize the transaction manager
-        """
         self.transactions = []
 
-    def submit(self, transaction, signature):
-        """
-        submit a transaction
-        :param transaction: transaction to be submitted
-        :param signature: the signature of transaction
-        :return: success or not
-        """
-        # if the transaction is submitted by a miner,
-        # just return true and reward it.
-        if transaction.sender == self.MINING_SENDER:
-            self.transactions.append(transaction)
-            return True
-        # the transaction occurs from one wallet to
-        # another
-        if transaction.verify(signature):
-            self.transactions.append(transaction)
-            return True
-        return False
+    @staticmethod
+    def create_coinbase(receiver, value, height):
+        _txins = [TxIn(None, None, str(height).encode(), None)]
+        _txouts = [TxOut(value, receiver)]
+        return Transaction(_txins, _txouts)

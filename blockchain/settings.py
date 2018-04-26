@@ -1,6 +1,5 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-MAX_BLOCK_SIZE = 1000000
 COINBASE_MATURITY = 6
 MONEY_PER_COIN = int(100e6)
 TOTAL_COINS = 21000000

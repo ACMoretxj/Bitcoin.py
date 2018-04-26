@@ -6,6 +6,7 @@ from blockchain.chain import Chain
 main_chain_id = None
 chains = {}
 orphan_blocks = []
+utxos = {}
 
 
 def locate_block(block_hash: str, chain: Chain=None) -> (Block, int, str):

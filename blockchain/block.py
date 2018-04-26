@@ -9,6 +9,7 @@ from blockchain.settings import *
 
 
 class Block:
+
     BlockHeader = namedtuple('BlockHeader',
                              ['version', 'prev_hash', 'merkle_hash', 'bits',
                               'nonce', 'stamp'])
@@ -32,9 +33,17 @@ class Block:
     def id(self):
         return hash(self)
 
+    @property
     def next_bits(self):
         if not self.prev_hash:
             return INITIAL_DIFFICULTY
+        # TODO
+
+    @property
+    def fees(self):
+        fee = 0
+
+        return fee
 
     def validate(self):
         if not self.trans_manager:
@@ -46,4 +55,4 @@ class Block:
         return str(self.header)
 
     def __hash__(self):
-        hashlib.sha256(self).hexdigest()
+        return hashlib.sha256(self).hexdigest()
