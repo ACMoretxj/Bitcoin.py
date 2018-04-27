@@ -22,3 +22,7 @@ class BlockValidationError(BaseError):
     def __init__(self, *args, to_orphan: Block=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.to_orphan = to_orphan
+
+
+class TxUnlockError(BaseError):
+    pass
