@@ -1,13 +1,9 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from blockchain.chain import ChainManager
-from blockchain.mempool import Mempool
-from blockchain.transaction import UTXOManager
-
-chain_manager = ChainManager()
-utxo_manager = UTXOManager()
-mempool = Mempool()
+from blockchain import chain_manager, utxo_manager
 
 
 if __name__ == '__main__':
+    chain_manager = chain_manager
+    utxo_manager = utxo_manager
     pass

@@ -16,14 +16,14 @@ BlockHeader = namedtuple('BlockHeader',
 class Block:
 
     def __init__(self, version, prev_hash, merkle_hash, bits, nonce,
-                 txn_manager):
+                 txn_manager, stamp=int(time())):
         self.version = version
         self.prev_hash = prev_hash
         self.merkle_hash = merkle_hash
         self.bits = bits
         self.nonce = nonce
         self.txn_manager = txn_manager
-        self.stamp = time()
+        self.stamp = stamp
 
     @property
     def header(self):
@@ -102,3 +102,15 @@ class Block:
         if not prev_hash:
             return INITIAL_DIFFICULTY
             # TODO
+
+    @staticmethod
+    def block_subsidy():
+        half_ratio = chain_manager.main_chain.height \
+                     // HALF_SUBSIDY_AFTER_BLOCK_NUM
+        if half_ratio > MAX_HALF_RATIO: return 0
+        return INITIAL_COIN_SUBSIDY * MONEY_PER_COIN // 2 ** half_ratio
+
+    @staticmethod
+    def new_block(pay_coinbase_to_addr, txns=None):
+        # TODO
+        pass

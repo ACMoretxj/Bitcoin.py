@@ -1,8 +1,8 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from blockchain import peer_manager
 from blockchain.transaction import UTxOut
 from server import encode_http_data
-from server.peer import PeerManager
 from utils import singleton
 from utils.error import TxValidationError
 
@@ -29,7 +29,10 @@ class Mempool:
             if e.to_orphan: self.orphan_txns.append(e.to_orphan)
         else:
             self.mempool[txn.id] = txn
-            PeerManager().notify_all_peers(encode_http_data(txn))
+            peer_manager.notify_all_peers(encode_http_data(txn))
+
+    def del_transaction(self, txid):
+        del self.mempool[txid]
 
     def load_transaction(self, block):
         # TODO

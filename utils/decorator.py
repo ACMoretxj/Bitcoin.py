@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 from functools import wraps
 
+from copy import deepcopy
+
 
 def singleton(cls):
     instances = {}
@@ -12,3 +14,12 @@ def singleton(cls):
             instances[cls] = cls(*args, **kwargs)
         return instances[cls]
     return get_instance
+
+
+def copy_args(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        args = deepcopy(args)
+        kwargs = deepcopy(kwargs)
+        return func(args, kwargs)
+    return inner

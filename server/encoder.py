@@ -1,6 +1,7 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from blockchain.transaction import Transaction, TxIn, TxOut
+from blockchain.block import Block
+from blockchain.transaction import Transaction, TxIn, TxOut, TransactionManager
 
 
 def __encode_transaction(txn):
@@ -41,14 +42,42 @@ def __decode_transaction(data):
     return txn
 
 
+def __encode_block(block):
+    data = {
+        'version': block.version,
+        'prev_hash': block.prev_hash,
+        'merkle_hash': block.merkle_hash,
+        'bits': block.bits,
+        'nonce': block.nonce,
+        'transactions': [__encode_transaction(txn)
+                         for txn in block.txn_manager.txns],
+        'stamp': block.stamp
+    }
+    return data
+
+
+def __decode_block(data):
+    txn_manager = TransactionManager(__decode_block(txn)
+                                     for txn in data['transactions'])
+    block = Block(version=int(data['version']), prev_hash=data['prev_hash'],
+                  merkle_hash=data['merkle_hash'], bits=data['bits'],
+                  nonce=data['nonce'], txn_manager=txn_manager,
+                  stamp=int(data['stamp']))
+    return block
+
+
 def encode_http_data(origin):
     if isinstance(origin, Transaction):
         return __encode_transaction(origin)
+    if isinstance(origin, Block):
+        return __encode_block(origin)
     else: return None
 
 
-def decode_http_data(origin):
-    origin = eval(origin)
-    if origin['type'] == 'transaction':
-        return __decode_transaction(origin)
+def decode_http_data(data):
+    data = eval(data)
+    if data['type'] == 'transaction':
+        return __decode_transaction(data)
+    if data['type'] == 'block':
+        return __decode_block(data)
     else: return None

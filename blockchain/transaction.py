@@ -4,7 +4,7 @@ import binascii
 import hashlib
 from collections import namedtuple
 
-from blockchain.blockchain import utxo_manager, chain_manager
+from blockchain import chain_manager, utxo_manager
 from blockchain.settings import *
 from encrypt import sha, pubkey_to_address, verify
 from utils import singleton
@@ -31,25 +31,9 @@ class Transaction:
 
     @property
     def is_coinbase(self):
-        return len(self.txins) == 1 and self.txins[0].utxos is None
+        return len(self.txins) == 1 and self.txins[0].txid is None
 
     def validate(self):
-        def validate_signature_for_spend(txin_, utxo_, txouts_):
-            def build_spend_msg(_txin, _txouts):
-                _msg = str(OutPoint(_txin.txid, _txin.txout_idx))
-                _msg += binascii.hexlify(_txin.unlock_pk).decode()
-                _msg += str(_txouts)
-                return sha(_msg).encode()
-
-            pubkey_as_addr = pubkey_to_address(txin_.unlock_pk)
-            if pubkey_as_addr != utxo_.receiver:
-                raise TxUnlockError('public key doesn\'t match')
-            spend_msg = build_spend_msg(txin_, txouts_)
-            try: verify(txin_.unlock_pk, txin_.unlock_sig, spend_msg)
-            except Exception:
-                raise TxUnlockError('Signature doesn\'t match')
-            return True
-
         if (not self.txouts) or (not self.txins and not self.is_coinbase):
             raise TxValidationError('Missing txouts or txins')
 
@@ -64,13 +48,31 @@ class Transaction:
             if len(chain_manager.main_chain) - utxo.height < COINBASE_MATURITY \
                     and utxo.is_coinbase:
                 raise TxValidationError('Coinbase utxo not ready for spending')
-            try: validate_signature_for_spend(txin, utxo, self.txouts)
+            try: self.__validate_signature(txin, utxo, self.txouts)
             except TxUnlockError:
                 raise TxValidationError('Txin is not a valid spend of utxo')
             available_money += utxo.value
         if available_money < sum(txout.value for txout in self.txouts):
             raise TxValidationError('Spend value is more than available')
         return self
+
+    def __validate_signature(self, txin, utxo, txouts):
+        pubkey_as_addr = pubkey_to_address(txin.unlock_pk)
+        if pubkey_as_addr != utxo.receiver:
+            raise TxUnlockError('public key doesn\'t match')
+        spend_msg = self.__build_spend_msg(txin, txouts)
+        try:
+            verify(txin.unlock_pk, txin.unlock_sig, spend_msg)
+        except Exception:
+            raise TxUnlockError('Signature doesn\'t match')
+        return True
+
+    # noinspection PyMethodMayBeStatic
+    def __build_spend_msg(self, txin, txouts):
+        _msg = str(OutPoint(txin.txid, txin.txout_idx))
+        _msg += binascii.hexlify(txin.unlock_pk).decode()
+        _msg += str(txouts)
+        return sha(_msg).encode()
 
     def __repr__(self):
         data = TransactionRepr(self.txins, self.txouts)
@@ -84,7 +86,7 @@ class Transaction:
 class UTXOManager:
 
     def __init__(self):
-        self.utxos = []
+        self.utxos = {}
 
     def add(self, txout, tx, idx, is_coinbase, height):
         utxo = UTxOut(*txout, tx.id, idx, is_coinbase, height)
@@ -102,8 +104,8 @@ class UTXOManager:
 
 class TransactionManager:
 
-    def __init__(self):
-        self.txns = []
+    def __init__(self, txns=None):
+        self.txns = txns or []
 
     @property
     def merkle_root(self):
