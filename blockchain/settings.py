@@ -1,5 +1,6 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
+MAX_BLOCK_SIZE = 100
 MAIN_CHAIN_INDEX = 0
 COINBASE_MATURITY = 6
 MONEY_PER_COIN = int(100e6)

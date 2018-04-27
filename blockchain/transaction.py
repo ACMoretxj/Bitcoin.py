@@ -81,6 +81,12 @@ class Transaction:
     def __hash__(self):
         return hashlib.sha256(self).hexdigest()
 
+    @staticmethod
+    def create_coinbase(receiver, value, height):
+        _txins = [TxIn(None, None, str(height).encode(), None)]
+        _txouts = [TxOut(value, receiver)]
+        return Transaction(_txins, _txouts)
+
 
 @singleton
 class UTXOManager:
@@ -120,9 +126,3 @@ class TransactionManager:
         leaves = [MerkleNode(sha(txn), None) for txn in self.txns]
         if len(leaves) % 2: leaves.append(MerkleNode(sha(self.txns[-1]), None))
         return find_root(leaves)
-
-    @staticmethod
-    def create_coinbase(receiver, value, height):
-        _txins = [TxIn(None, None, str(height).encode(), None)]
-        _txouts = [TxOut(value, receiver)]
-        return Transaction(_txins, _txouts)

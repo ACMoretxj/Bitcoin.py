@@ -53,6 +53,7 @@ class ChainManager:
 
     @property
     def main_chain(self):
+        if self.main_chain_idx is None: return None
         return self.chains[self.main_chain_idx]
 
     @property
