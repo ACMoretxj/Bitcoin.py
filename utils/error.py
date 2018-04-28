@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from blockchain.block import Block
-from blockchain.transaction import Transaction
+import blockchain.block
+import blockchain.transaction
 
 
 class BaseError(BaseException):
@@ -12,14 +12,14 @@ class BaseError(BaseException):
 
 class TxValidationError(BaseError):
 
-    def __init__(self, *args, to_orphan: Transaction=None, **kwargs):
+    def __init__(self, *args, to_orphan=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.to_orphan = to_orphan
 
 
 class BlockValidationError(BaseError):
 
-    def __init__(self, *args, to_orphan: Block=None, **kwargs):
+    def __init__(self, *args, to_orphan=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.to_orphan = to_orphan
 

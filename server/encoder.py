@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from blockchain.block import Block
-from blockchain.transaction import Transaction, TxIn, TxOut, TransactionManager
+import blockchain.block
+import blockchain.transaction
 
 
 def __encode_transaction(txn):
@@ -30,15 +30,15 @@ def __encode_transaction(txn):
 def __decode_transaction(data):
     def decode_txin(_txin):
         _txin = eval(_txin)
-        return TxIn(_txin['id'], _txin['txout_idx'],
-                    _txin['unlock_sig'], _txin['unlock_pk'])
+        return blockchain.transaction.TxIn(_txin['id'], _txin['txout_idx'],
+                                _txin['unlock_sig'], _txin['unlock_pk'])
 
     def decode_txout(_txout):
         _txout = eval(_txout)
-        return TxOut(_txout['value'], _txout['receiver'])
+        return blockchain.transaction.TxOut(_txout['value'], _txout['receiver'])
 
-    txn = Transaction(txins=[decode_txin(txin) for txin in data['txins']],
-                      txouts=[decode_txout(txout) for txout in data['txouts']])
+    txn = blockchain.transaction.Transaction(txins=[decode_txin(txin) for txin in data['txins']],
+                                  txouts=[decode_txout(txout) for txout in data['txouts']])
     return txn
 
 
@@ -57,19 +57,19 @@ def __encode_block(block):
 
 
 def __decode_block(data):
-    txn_manager = TransactionManager(__decode_block(txn)
+    txn_manager = blockchain.transaction.TransactionManager(__decode_block(txn)
                                      for txn in data['transactions'])
-    block = Block(version=int(data['version']), prev_hash=data['prev_hash'],
-                  merkle_hash=data['merkle_hash'], bits=data['bits'],
-                  nonce=data['nonce'], txn_manager=txn_manager,
-                  stamp=int(data['stamp']))
+    block = blockchain.block.Block(version=int(data['version']), prev_hash=data['prev_hash'],
+                                   merkle_hash=data['merkle_hash'], bits=data['bits'],
+                                   nonce=data['nonce'], txn_manager=txn_manager,
+                                   stamp=int(data['stamp']))
     return block
 
 
 def encode_http_data(origin):
-    if isinstance(origin, Transaction):
+    if isinstance(origin, blockchain.transaction.Transaction):
         return __encode_transaction(origin)
-    if isinstance(origin, Block):
+    if isinstance(origin, blockchain.block.Block):
         return __encode_block(origin)
     else: return None
 

@@ -4,7 +4,7 @@ from functools import lru_cache
 
 import os
 
-from blockchain.settings import DEFAULT_WALLET_PATH
+from .settings import DEFAULT_WALLET_PATH
 from encrypt import get_signing_key, new_signing_key, get_verifying_key, \
     pubkey_to_address
 

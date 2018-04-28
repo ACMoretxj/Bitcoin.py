@@ -13,7 +13,7 @@ def new_signing_key():
 
 
 def get_signing_key(s):
-    ecdsa.SigningKey.from_string(s, curve=ecdsa.SECP256k1)
+    return ecdsa.SigningKey.from_string(s, curve=ecdsa.SECP256k1)
 
 
 def get_verifying_key(signing_key):

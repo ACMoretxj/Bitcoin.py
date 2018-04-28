@@ -1,36 +1,39 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from blockchain import peer_manager, utxo_manager
-from blockchain.block import Block
-from blockchain.transaction import UTxOut, MAX_BLOCK_SIZE
-from server import encode_http_data
+import blockchain.transaction
+import server.encoder as encoder
+import server.peer
+import utils.error
+
+from blockchain.settings import *
 from utils import singleton
-from utils.error import TxValidationError
 
 
 @singleton
 class Mempool:
 
     def __init__(self):
-        self.pool = []
+        self.pool = {}
         self.orphan_txns = []
 
     def find_utxo(self, txin):
         # noinspection PyBroadException
         try: txout = self.pool[txin.txid].txouts[txin.txout_idx]
         except Exception: return None
-        return UTxOut(*txout, txin.txid, txin.txout_idx, False, -1)
+        return blockchain.transaction.UTxOut(*txout, txin.txid, txin.txout_idx, False, -1)
 
     def add_transaction(self, txn):
+        peer_manager = server.peer.PeerManager()
+
         if txn.id in self.pool:
             return None
 
         try: txn.validate()
-        except TxValidationError as e:
+        except utils.error.TxValidationError as e:
             if e.to_orphan: self.orphan_txns.append(e.to_orphan)
         else:
             self.pool[txn.id] = txn
-            peer_manager.notify_all_peers(encode_http_data(txn))
+            peer_manager.notify_all_peers(encoder.encode_http_data(txn))
 
     def get_transaction(self, txid):
         if txid not in self.pool:
@@ -38,6 +41,7 @@ class Mempool:
         return self.pool[txid]
 
     def del_transaction(self, txid):
+        if txid not in self.pool: return None
         del self.pool[txid]
 
     def transaction_iter(self):
@@ -46,6 +50,8 @@ class Mempool:
             yield txid
 
     def load_transactions(self, block):
+        utxo_manager = blockchain.transaction.UTXOManager()
+
         def add_to_block(_txid):
             if _txid in added_to_block:
                 return None
