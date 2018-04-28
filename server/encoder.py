@@ -9,14 +9,14 @@ def __encode_transaction(txn):
         return {
             'txid': _txin.txid,
             'txout_idx': _txin.txout_idx,
-            'unlock_sig': _txin.unlock_sig,
-            'unlock_pk': _txin.unlock_pk
+            'unlock_sig': _txin.unlock_sig.decode('utf-8') if _txin.unlock_sig else None,
+            'unlock_pk': _txin.unlock_pk.decode('utf-8') if _txin.unlock_pk else None
         }
 
     def encode_txout(_txout):
         return {
             'value': _txout.value,
-            'receiver': _txout.receiver
+            'receiver': _txout.receiver.decode('utf-8') if _txout.receiver else None
         }
 
     data = {
@@ -33,13 +33,15 @@ def __decode_transaction(data):
             _txin = str(_txin)
         _txin = eval(_txin)
         return blockchain.transaction.TxIn(_txin['txid'], _txin['txout_idx'],
-                                           _txin['unlock_sig'], _txin['unlock_pk'])
+                                           _txin['unlock_sig'].encode('utf-8') if _txin['unlock_sig'] else None,
+                                           _txin['unlock_pk'].encode('utf-8') if _txin['unlock_pk'] else None)
 
     def decode_txout(_txout):
         if not isinstance(_txout, str):
             _txout = str(_txout)
         _txout = eval(_txout)
-        return blockchain.transaction.TxOut(_txout['value'], _txout['receiver'])
+        return blockchain.transaction.TxOut(_txout['value'],
+                                            _txout['receiver'].encode('utf-8') if _txout['receiver'] else None)
 
     txn = blockchain.transaction.Transaction(txins=[decode_txin(txin) for txin in data['txins']],
                                              txouts=[decode_txout(txout) for txout in data['txouts']])

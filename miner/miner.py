@@ -1,5 +1,12 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys
+import os
+
+sys.path.insert(0, os.path.abspath('./'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../../'))
+
 import threading
 from time import time
 
@@ -35,15 +42,18 @@ class Miner:
 
     @staticmethod
     def mine_forever():
+        import time
         chain_manager = blockchain.chain.ChainManager()
         while True:
             block = Miner.mine()
             if block: chain_manager.connect_block(block)
-#
-#
-# if __name__ == '__main__':
-#     cm = blockchain.chain.ChainManager()
-#     for i in range(1000):
-#         blk = Miner.mine()
-#         cm.connect_block(blk)
-#         print('current index: %d, difficulty: %d, hash: %s' % (i, blk.bits, blk.id))
+            # print('Got block: %s' % block.id)
+            time.sleep(10)
+
+
+if __name__ == '__main__':
+    cm = blockchain.chain.ChainManager()
+    for i in range(1000):
+        blk = Miner.mine()
+        cm.connect_block(blk)
+        # print('current index: %d, difficulty: %d, hash: %s' % (i, blk.bits, blk.id))
