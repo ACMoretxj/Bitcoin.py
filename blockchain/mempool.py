@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import blockchain.transaction
-import server.encoder as encoder
+import server.encoder
 import server.peer
 import utils.error
 
@@ -33,7 +33,7 @@ class Mempool:
             if e.to_orphan: self.orphan_txns.append(e.to_orphan)
         else:
             self.pool[txn.id] = txn
-            peer_manager.notify_all_peers(encoder.encode_http_data(txn))
+            peer_manager.notify_all_peers(server.encoder.encode_http_data(txn))
 
     def get_transaction(self, txid):
         if txid not in self.pool:

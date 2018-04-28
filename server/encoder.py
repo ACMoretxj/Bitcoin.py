@@ -29,21 +29,26 @@ def __encode_transaction(txn):
 
 def __decode_transaction(data):
     def decode_txin(_txin):
+        if not isinstance(_txin, str):
+            _txin = str(_txin)
         _txin = eval(_txin)
-        return blockchain.transaction.TxIn(_txin['id'], _txin['txout_idx'],
-                                _txin['unlock_sig'], _txin['unlock_pk'])
+        return blockchain.transaction.TxIn(_txin['txid'], _txin['txout_idx'],
+                                           _txin['unlock_sig'], _txin['unlock_pk'])
 
     def decode_txout(_txout):
+        if not isinstance(_txout, str):
+            _txout = str(_txout)
         _txout = eval(_txout)
         return blockchain.transaction.TxOut(_txout['value'], _txout['receiver'])
 
     txn = blockchain.transaction.Transaction(txins=[decode_txin(txin) for txin in data['txins']],
-                                  txouts=[decode_txout(txout) for txout in data['txouts']])
+                                             txouts=[decode_txout(txout) for txout in data['txouts']])
     return txn
 
 
 def __encode_block(block):
     data = {
+        'type': 'block',
         'version': block.version,
         'prev_hash': block.prev_hash,
         'merkle_hash': block.merkle_hash,
@@ -57,8 +62,8 @@ def __encode_block(block):
 
 
 def __decode_block(data):
-    txn_manager = blockchain.transaction.TransactionManager(__decode_block(txn)
-                                     for txn in data['transactions'])
+    txn_manager = blockchain.transaction.TransactionManager(list(__decode_transaction(txn)
+                                                            for txn in data['transactions']))
     block = blockchain.block.Block(version=int(data['version']), prev_hash=data['prev_hash'],
                                    merkle_hash=data['merkle_hash'], bits=data['bits'],
                                    nonce=data['nonce'], txn_manager=txn_manager,
@@ -75,6 +80,8 @@ def encode_http_data(origin):
 
 
 def decode_http_data(data):
+    if not isinstance(data, str):
+        data = str(data)
     data = eval(data)
     if data['type'] == 'transaction':
         return __decode_transaction(data)

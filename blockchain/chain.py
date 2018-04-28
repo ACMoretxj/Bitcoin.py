@@ -7,7 +7,7 @@ import blockchain.transaction
 import blockchain.mempool
 
 import miner
-import server.encoder as encoder
+import server.encoder
 import server.peer
 from encrypt import sha
 
@@ -173,7 +173,7 @@ class ChainManager:
                 or chain_idx == self.main_chain_idx:
             miner.mine_interrupt.set()
 
-        peer_manager.notify_all_peers(encoder.encode_http_data(block))
+        peer_manager.notify_all_peers(server.encoder.encode_http_data(block))
 
         return chain_idx
 
