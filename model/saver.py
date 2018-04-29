@@ -34,14 +34,14 @@ def save():
                     txin_model.txn = txn_model
                     txin_model.txid = txin.txid
                     txin_model.txout_idx = txin.txout_idx
-                    txin_model.unlock_sig = txin.unlock_sig.decode('utf-8')
-                    txin_model.unlock_pk = txin.unlock_pk.decode('utf-8')
+                    txin_model.unlock_sig = txin.unlock_sig.decode('utf-8') if txin.unlock_sig else None
+                    txin_model.unlock_pk = txin.unlock_pk.decode('utf-8') if txin.unlock_pk else None
                     txin_model.save()
                 for txout in txn.txouts:
                     txout_model = TxOut()
                     txout_model.txn = txn_model
                     txout_model.value = txout.value
-                    txout_model.receiver = txout.receiver.decode('utf-8')
+                    txout_model.receiver = txout.receiver.decode('utf-8') if txout.receiver else None
                     txout_model.save()
 
 
@@ -51,6 +51,7 @@ def recover():
     from blockchain.transaction import Transaction as ChainTxn
     from blockchain.transaction import TxIn as ChainTxIn
     from blockchain.transaction import TxOut as ChainTxOut
+    chain_manager = ChainManager()
     with db.atomic():
         block_models = prefetch(Block.select(), Transaction.select(),
                                 TxIn.select(), TxOut.select())
@@ -64,12 +65,18 @@ def recover():
                 txins, txouts = [], []
                 for txin_model in txn_model.txins:
                     txin = ChainTxIn(txin_model.txid, txin_model.txout_idx,
-                                     txin_model.unlock_sig.encode('utf-8'),
-                                     txin_model.unlock_pk.encode('utf-8'))
+                                     txin_model.unlock_sig.encode('utf-8') if txin_model.unlock_sig else None,
+                                     txin_model.unlock_pk.encode('utf-8') if txin_model.unlock_pk else None)
                     txins.append(txin)
                 for txout_model in txn_model.txouts:
-                    txout = ChainTxOut(txout_model.value,
-                                       txout_model.receiver.encode('utf-8'))
+                    txout = ChainTxOut(int(txout_model.value),
+                                       txout_model.receiver.encode('utf-8') if txout_model.receiver else None)
                     txouts.append(txout)
                 txn = ChainTxn(txins, txouts)
                 txn_manager.txns.append(txn)
+            chain_manager.connect_block(block)
+
+
+if __name__ == '__main__':
+    save()
+    recover()

@@ -35,7 +35,8 @@ class UTXOManager:
 
     def remove(self, txid, txout_idx):
         op = OutPoint(txid, txout_idx)
-        del self.utxos[op]
+        if op in self.utxos:
+            del self.utxos[op]
 
     def find(self, txid, txout_idx):
         op = OutPoint(txid, txout_idx)

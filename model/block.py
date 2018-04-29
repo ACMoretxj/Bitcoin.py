@@ -11,7 +11,7 @@ class Block(BaseModel):
 
     block_id = CharField(default='', max_length=64)
     version = IntegerField(default=0)
-    prev_hash = CharField(default='', max_length=64)
+    prev_hash = CharField(null=True, default='', max_length=64)
     merkle_hash = CharField(default='', max_length=64)
     bits = IntegerField(default=INITIAL_DIFFICULTY)
     nonce = IntegerField(default=0)

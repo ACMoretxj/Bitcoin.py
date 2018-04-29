@@ -12,13 +12,13 @@ class Transaction(BaseModel):
 
 class TxIn(BaseModel):
     txn = ForeignKeyField(Transaction, related_name='txins')
-    txid = CharField(default='', max_length=64)
-    txout_idx = IntegerField(default=0)
-    unlock_sig = CharField(default='', max_length=64)
-    unlock_pk = CharField(default='', max_length=64)
+    txid = CharField(null=True, max_length=64)
+    txout_idx = IntegerField(null=True, default=0)
+    unlock_sig = CharField(null=True, max_length=64)
+    unlock_pk = CharField(null=True, max_length=64)
 
 
 class TxOut(BaseModel):
     txn = ForeignKeyField(Transaction, related_name='txouts')
-    value = IntegerField(default=0)
-    receiver = CharField(default='', max_length=64)
+    value = FloatField(default=0)
+    receiver = CharField(null=True, max_length=64)
