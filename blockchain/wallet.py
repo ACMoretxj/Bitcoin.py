@@ -1,6 +1,6 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from functools import lru_cache
+import functools
 
 import os
 
@@ -9,7 +9,7 @@ from encrypt import get_signing_key, new_signing_key, get_verifying_key, \
     pubkey_to_address
 
 
-@lru_cache()
+@functools.lru_cache()
 def init_wallet(path=None):
     path = path or DEFAULT_WALLET_PATH
 

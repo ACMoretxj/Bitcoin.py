@@ -1,7 +1,7 @@
 # !/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import hashlib
-from base58 import b58encode_check
+import base58
 
 
 def pubkey_to_address(pubkey):
@@ -9,4 +9,4 @@ def pubkey_to_address(pubkey):
         raise RuntimeError('missing ripemd160 hash algorithm')
     sha = hashlib.sha256(pubkey).digest()
     ripe = hashlib.new('ripemd160', sha).digest()
-    return b58encode_check(b'\x00' + ripe)
+    return base58.b58encode_check(b'\x00' + ripe)
